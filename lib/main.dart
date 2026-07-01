@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'clonelab_bridge.dart';
+import 'package:flutter/services.dart';
 
 void main() {
   runApp(const CloneLabApp());
@@ -30,25 +30,44 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String _status = 'Engine Ready';
+  static const _channel = MethodChannel('com.clonelab.app/native');
 
   Future<void> _checkEngine() async {
+    // पहले तुरंत डायलॉग दिखाओ ताकि पता चले बटन ने काम किया
+    _showMessage("Button pressed, calling native...");
+
     try {
-      final version = await CloneLabBridge.getEngineVersion();
-      setState(() => _status = version);
+      final version = await _channel.invokeMethod<String>('getEngineVersion');
+      if (!mounted) return;
+      _showMessage("Engine version: $version");
     } catch (e) {
-      setState(() => _status = 'Error: $e');
+      _showMessage("Error: ${e.toString()}");
     }
   }
 
   Future<void> _cloneWhatsApp() async {
-    setState(() => _status = 'Cloning...');
+    _showMessage("Cloning WhatsApp...");
+
     try {
-      final pid = await CloneLabBridge.createClone(appPackage: 'com.whatsapp');
-      setState(() => _status = 'Clone PID: $pid');
+      final pid = await _channel.invokeMethod<int>('createClone', {'package': 'com.whatsapp'});
+      if (!mounted) return;
+      _showMessage("Clone PID: $pid");
     } catch (e) {
-      setState(() => _status = 'Clone failed: $e');
+      _showMessage("Clone error: ${e.toString()}");
     }
+  }
+
+  void _showMessage(String msg) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('CloneLab'),
+        content: Text(msg),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK')),
+        ],
+      ),
+    );
   }
 
   @override
@@ -62,8 +81,6 @@ class _HomeScreenState extends State<HomeScreen> {
             const Icon(Icons.copy, size: 64, color: Color(0xFF6C63FF)),
             const SizedBox(height: 24),
             const Text('CloneLab', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
-            const SizedBox(height: 8),
-            Text(_status, style: const TextStyle(color: Colors.white70)),
             const SizedBox(height: 32),
             ElevatedButton(
               onPressed: _checkEngine,
