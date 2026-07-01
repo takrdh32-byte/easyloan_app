@@ -1,68 +1,16 @@
-name: Build Debug APK (CloneLab Engine)
+name: Test Workflow
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, master ]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.22.0'
-          channel: 'stable'
-
-      - name: Setup Android SDK & NDK
-        uses: android-actions/setup-android@v3
-
-      - name: Create fresh Flutter project in /tmp/build
-        run: |
-          rm -rf /tmp/build
-          flutter create --org com.clonelab.app --project-name clonelab /tmp/build
-
-      - name: Copy custom AndroidManifest
-        run: |
-          mkdir -p /tmp/build/android/app/src/main
-          if [ -f android/app/src/main/AndroidManifest.xml ]; then
-            cp android/app/src/main/AndroidManifest.xml /tmp/build/android/app/src/main/
-          fi
-
-      - name: Copy custom build.gradle
-        run: |
-          mkdir -p /tmp/build/android/app
-          if [ -f android/app/build.gradle ]; then
-            cp android/app/build.gradle /tmp/build/android/app/
-          fi
-
-      - name: Copy native C++ sources
-        run: |
-          mkdir -p /tmp/build/android/app/src/main/cpp
-          if [ -d android/app/src/main/cpp ]; then
-            cp -r android/app/src/main/cpp/* /tmp/build/android/app/src/main/cpp/
-          fi
-
-      - name: Copy Flutter lib and pubspec
-        run: |
-          rm -rf /tmp/build/lib
-          cp -r lib /tmp/build/lib
-          cp pubspec.yaml /tmp/build/
-
-      - name: Install Flutter dependencies
-        working-directory: /tmp/build
-        run: flutter pub get
-
-      - name: Build APK (Debug with native)
-        working-directory: /tmp/build
-        run: flutter build apk --debug
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: clonelab-debug-apk
-          path: /tmp/build/build/app/outputs/flutter-apk/app-debug.apk
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Say Hello
+        run: echo "Actions is working!"
