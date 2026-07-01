@@ -1,6 +1,7 @@
 #include <jni.h>
 #include <string>
 #include <android/log.h>
+#include <unistd.h>              // <-- यह जोड़ें
 #include "namespace_manager.h"
 
 #define LOG_TAG "CloneLabNative"
@@ -13,11 +14,9 @@ Java_com_clonelab_app_MainActivity_getEngineVersion(JNIEnv* env, jobject) {
     return env->NewStringUTF(version.c_str());
 }
 
-// डमी क्लोन टार्गेट — अभी सिर्फ लॉग करता है, बाद में असली ऐप लॉन्च करेगा
 static int dummyCloneTarget() {
     LOGI("Clone process started (dummy)");
-    // यहाँ बाद में `am start` या Zygote से ऐप शुरू करेंगे
-    sleep(5); // थोड़ी देर ज़िंदा रहे
+    sleep(5); // अब एरर नहीं देगा
     return 0;
 }
 
@@ -27,7 +26,7 @@ Java_com_clonelab_app_MainActivity_createClone(JNIEnv* env, jobject, jstring app
     LOGI("Creating clone for: %s", package);
 
     NamespaceConfig config;
-    config.dataDir = "/data/data/com.clonelab.clone1"; // बाद में डायनामिक बनाएँगे
+    config.dataDir = "/data/data/com.clonelab.clone1";
     config.sdcardDir = "/sdcard/CloneLab/clone1";
     config.isolateMount = true;
     config.isolatePid = true;
@@ -38,7 +37,6 @@ Java_com_clonelab_app_MainActivity_createClone(JNIEnv* env, jobject, jstring app
 
     if (childPid > 0) {
         LOGI("Clone process PID: %d", childPid);
-        // ध्यान रहे: अभी चाइल्ड को तुरंत मारा नहीं जा रहा, बाद में मैनेज करेंगे
     }
     return static_cast<jint>(childPid);
 }
