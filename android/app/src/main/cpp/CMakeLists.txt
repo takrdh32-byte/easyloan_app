@@ -5,7 +5,7 @@ add_library(
     clonelab_native
     SHARED
     namespace_manager.cpp
-    native-lib.cpp          # <-- नई जोड़ी गई
+    native-lib.cpp
 )
 
 if(${ANDROID_ABI} STREQUAL "armeabi-v7a")
