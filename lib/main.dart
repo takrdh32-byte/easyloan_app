@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'clonelab_bridge.dart';
 
 void main() {
   runApp(const CloneLabApp());
@@ -30,44 +30,26 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  static const _channel = MethodChannel('com.clonelab.app/native');
+  String _status = 'Tap a button';
 
   Future<void> _checkEngine() async {
-    // पहले तुरंत डायलॉग दिखाओ ताकि पता चले बटन ने काम किया
-    _showMessage("Button pressed, calling native...");
-
+    setState(() => _status = 'Checking engine...');
     try {
-      final version = await _channel.invokeMethod<String>('getEngineVersion');
-      if (!mounted) return;
-      _showMessage("Engine version: $version");
+      final version = await CloneLabBridge.getEngineVersion();
+      setState(() => _status = version);
     } catch (e) {
-      _showMessage("Error: ${e.toString()}");
+      setState(() => _status = 'Error: $e');
     }
   }
 
   Future<void> _cloneWhatsApp() async {
-    _showMessage("Cloning WhatsApp...");
-
+    setState(() => _status = 'Cloning WhatsApp...');
     try {
-      final pid = await _channel.invokeMethod<int>('createClone', {'package': 'com.whatsapp'});
-      if (!mounted) return;
-      _showMessage("Clone PID: $pid");
+      final pid = await CloneLabBridge.createClone(appPackage: 'com.whatsapp');
+      setState(() => _status = 'Clone PID: $pid');
     } catch (e) {
-      _showMessage("Clone error: ${e.toString()}");
+      setState(() => _status = 'Clone failed: $e');
     }
-  }
-
-  void _showMessage(String msg) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('CloneLab'),
-        content: Text(msg),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK')),
-        ],
-      ),
-    );
   }
 
   @override
@@ -75,23 +57,34 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.copy, size: 64, color: Color(0xFF6C63FF)),
-            const SizedBox(height: 24),
-            const Text('CloneLab', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: _checkEngine,
-              child: const Text('Check Engine'),
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: _cloneWhatsApp,
-              child: const Text('Clone WhatsApp'),
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.copy, size: 64, color: Color(0xFF6C63FF)),
+              const SizedBox(height: 24),
+              const Text('CloneLab', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
+              const SizedBox(height: 16),
+              Text(_status, style: const TextStyle(color: Colors.white70, fontSize: 16)),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _checkEngine,
+                  child: const Text('Check Engine'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _cloneWhatsApp,
+                  child: const Text('Clone WhatsApp'),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
